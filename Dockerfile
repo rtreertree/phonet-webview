@@ -18,6 +18,9 @@ COPY --from=deps /app/node_modules ./node_modules
 # Copy all source code
 COPY . .
 
+# Generate Prisma client
+RUN npx prisma generate
+
 # Build Next.js app
 RUN npm run build
 

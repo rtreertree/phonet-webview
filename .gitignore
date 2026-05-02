@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+cloud-sql-proxy.exe
+
+/lib/generated/prisma
