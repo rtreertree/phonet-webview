@@ -28,6 +28,7 @@ RUN npm run build
 FROM node:24-alpine AS runner
 WORKDIR /app
 
+# Set environment variables for production
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=8080
