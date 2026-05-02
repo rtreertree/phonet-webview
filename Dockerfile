@@ -1,5 +1,5 @@
 # Install dependencies only when needed
-FROM node:16-alpine AS deps
+FROM node:24-alpine AS deps
 # Check https://github.com/nodejs/docker-node/tree/b4117f933ba60658f2812f36b8117330a1dc25ab#alpine
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
@@ -20,7 +20,7 @@ RUN npm run build
 #### Stage 2: Production image ###
 ###############
 
-FROM node:16-alpine AS runner
+FROM node:24-alpine AS runner
 
 WORKDIR /app
 
