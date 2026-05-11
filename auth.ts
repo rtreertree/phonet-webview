@@ -1,36 +1,53 @@
 import NextAuth from "next-auth"
-import { PrismaAdapter } from "@auth/prisma-adapter"
-import { db } from "@/lib/db"
 import Credentials from "next-auth/providers/credentials"
+import { PrismaAdapter } from "@auth/prisma-adapter"
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: PrismaAdapter(db),
-  providers: [
-    Credentials({
-      // You can specify which fields should be submitted, by adding keys to the `credentials` object.
-      // e.g. domain, username, password, 2FA token, etc.
-      credentials: {
-        email: {},
-        password: {},
-      },
-      authorize: async (credentials) => {
-        let user = null
- 
-        // logic to salt and hash password
-        // const pwHash = saltAndHashPassword(credentials.password)
- 
-        // logic to verify if the user exists
-        // user = await getUserFromDb(credentials.email, pwHash)
- 
-        if (!user) {
-          // No user found, so this is their first attempt to login
-          // Optionally, this is also the place you could do a user registration
-          throw new Error("Invalid credentials.")
-        }
- 
-        // return user object with their profile data
-        return user
-      },
-    }),
-  ],
+import { db } from "@/lib/db"
+
+
+export const {auth, signIn, signOut, handlers} = NextAuth({
+    adapter: PrismaAdapter(db),
+    pages: {
+        signIn: "/auth/login",
+		error: "/auth/error",
+    },
+	session: {
+		strategy: "jwt",
+	},
+
+    providers: [
+        Credentials({
+            credentials: {
+                email: {
+                    label: "Email",
+                    type: "email",
+                },
+                password: {
+                    label: "Password",
+                    type: "password",
+                },
+            },
+
+            async authorize(credentials) {
+                console.log(credentials)
+
+                if (!credentials?.email || !credentials?.password) {
+                    return null
+                }
+
+                if (
+                    credentials.email === "test" &&
+                    credentials.password === "password"
+                ) {
+                    return {
+                        id: "1",
+                        name: "Test User",
+                        email: "test@test.com",
+                    }
+                }
+
+                return null
+            },
+        }),
+    ],
 })

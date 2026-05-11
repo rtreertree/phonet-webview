@@ -1,1 +1,3 @@
-export { auth as proxy } from "@/auth"
+import { auth } from "@/auth"
+
+export default function proxy() { auth }

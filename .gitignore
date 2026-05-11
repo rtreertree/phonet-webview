@@ -17,6 +17,8 @@
 /.next/
 /out/
 
+/.next
+
 # production
 /build
 
@@ -40,6 +42,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-cloud-sql-proxy.exe
+cloud-sql-proxy*
 
 /lib/generated/prisma
