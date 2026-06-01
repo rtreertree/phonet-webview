@@ -17,6 +17,8 @@ export default function SignupPage() {
     }
 
     return (
-        <SignupModal />
+        <div>
+            <SignupModal />
+        </div>
     )
 }

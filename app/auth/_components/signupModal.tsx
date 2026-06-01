@@ -1,25 +1,30 @@
 "use client";
 
 import React, { useState } from "react";
-import { User, Mail, Lock, Calendar, ChevronRight, ArrowLeft } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { AnimatedButton } from "@/components/button/animatedButton";
-import { AnimatedLink } from "@/components/text/animatedLink";
 import { AnimatedTextField } from "@/components/text/animatedTextField";
-import { AnimatedCard } from "@/components/utils/animatedCard";
+import { AnimatedCard, InfoItem } from "@/components/utils/animatedCard";
 import { AnimatedSeparator } from "@/components/utils/animatedSeparator";
-import { AuthHeader, AuthLogo } from "@/components/utils/authUI";
+import { AnimatedLink } from "@/components/text/animatedLink";
 import { AnimatedSelect } from "@/components/utils/animatedSelect";
+import { AnimatedDateSelector } from "@/components/utils/animatedDateSelector";
+import { useRouter } from 'next/navigation';
 
-import { useRouter } from 'next/navigation'
+import { signupSchema } from "@/lib/auth/validator"; // Adjust path as needed
+import { registerUser } from "@/actions/auth/register";
 
 export default function RegisterPage() {
-
     const router = useRouter();
 
     const [isLoading, setIsLoading] = useState(false);
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
+    const [infoItems, setInfoItems] = useState<InfoItem[]>([]);
     const [gender, setGender] = useState("");
+    const [birthDate, setBirthDate] = useState("");
+    const [fullName, setFullName] = useState("");
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
 
     const genderOptions = [
         { label: "Male", value: "male" },
@@ -28,80 +33,126 @@ export default function RegisterPage() {
         { label: "Prefer not to say", value: "private" },
     ];
 
-    const handleRegister = (e: React.FormEvent) => {
-        e.preventDefault();
+    // 2. Updated Submit Handler
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
         setIsLoading(true);
+        setErrors({}); // Reset previous errors
 
-        // Mock validation logic
-        setTimeout(() => {
-            setErrors({
-                email: "This email is already registered",
-                password: "Password is too weak"
+        const formData = {
+            fullName,
+            birthDate,
+            gender,
+            email,
+            password,
+        };
+
+        // Validate using safeParse so it doesn't throw a runtime exception
+        const result = signupSchema.safeParse(formData);
+
+        if (!result.success) {
+            // Flatten errors into a flat key-value pair format { fieldName: message }
+            const formattedErrors: { [key: string]: string } = {};
+
+            // Zod exposes validation issues via `error.issues`
+            result.error.issues.forEach((issue) => {
+                const key = issue.path?.[0] as string | undefined;
+
+                if (key) {
+                    console.log(`Validation error on ${key}: ${issue.message}`);
+                    formattedErrors[key] = issue.message;
+                }
             });
+
+            setErrors(formattedErrors);
             setIsLoading(false);
-        }, 1500);
+            return;
+        }
+
+        // If validation passes, proceed with API submission
+        try {
+            await registerUser(result.data);
+            setInfoItems([{ success: "Registration successful! Redirecting to login..." }]);
+            setTimeout(() => {
+                router.push("/auth/login");
+            }, 2000);
+        } catch (apiError) {
+            setInfoItems([
+                { error: "Error occurred while registering" }
+            ]);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (
         <div className="flex min-h-screen items-center justify-center bg-background p-6">
-            {/* Background Decor*/}
             <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
                 <div className="absolute top-[10%] left-[10%] w-[40%] h-[40%] bg-primary/5 blur-[120px] rounded-full" />
                 <div className="absolute bottom-[10%] right-[10%] w-[40%] h-[40%] bg-red-500/5 blur-[120px] rounded-full" />
             </div>
 
-            <AnimatedCard maxWidth="500px" padding="lg">
-                {/* Header */}
-                <div className="mb-8 text-center">
-                    <h1 className="text-3xl font-bold tracking-tight text-foreground">Create Account</h1>
-                    <p className="text-muted-foreground mt-2">Join our academic community today</p>
-                </div>
+            <AnimatedCard maxWidth="500px" padding="lg" items={infoItems}
+                title={
+                    <div className="mb-8 text-center">
+                        <h1 className="text-3xl font-bold tracking-tight text-foreground">Create Account</h1>
+                        <p className="text-muted-foreground mt-2">Join our academic community today</p>
+                    </div>
+                }
+            >
 
-                <form onSubmit={handleRegister} className="space-y-4">
-                    {/* Full Name */}
+
+                <form onSubmit={handleSubmit} className="space-y-4">
                     <AnimatedTextField
                         label="Full Name"
                         placeholder="Boonyapa Kuttikay"
                         error={errors.fullName}
-                        onChange={() => setErrors({ ...errors, fullName: "" })}
+                        value={fullName}
+                        setValue={setFullName}
+                        onChange={() => setErrors(prev => ({ ...prev, fullName: "" }))}
                     />
 
                     <div className="grid grid-cols-2 gap-4">
-                        {/* Age */}
-                        <AnimatedTextField
-                            label="Age"
-                            type="number"
-                            placeholder="21"
-                            error={errors.age}
+                        <AnimatedDateSelector
+                            label="Date of Birth"
+                            sizeConfig="md"
+                            value={birthDate}
+                            setValue={setBirthDate}
+                            onChange={() => setErrors(prev => ({ ...prev, birthDate: "" }))}
+                            error={errors.birthDate}
                         />
-                        {/* Gender - Using text for simplicity, or "list" for suggestions */}
                         <AnimatedSelect
                             label="Gender"
                             placeholder="Select"
                             options={genderOptions}
                             value={gender}
-                            onChange={setGender}
+                            onChange={(value) => {
+                                setGender(value);
+                                setErrors(prev => ({ ...prev, gender: "" }));
+                            }}
                             sizeConfig="md"
                             error={errors.gender}
                         />
                     </div>
 
-                    {/* Email */}
                     <AnimatedTextField
                         label="Email Address"
                         type="email"
                         placeholder="name@example.com"
                         error={errors.email}
-                        onChange={() => setErrors({ ...errors, email: "" })}
+                        value={email}
+                        setValue={setEmail}
+                        onChange={() => setErrors(prev => ({ ...prev, email: "" }))}
                     />
 
-                    {/* Password */}
                     <AnimatedTextField
                         label="Password"
                         type="password"
                         placeholder="••••••••"
                         error={errors.password}
-                        onChange={() => setErrors({ ...errors, password: "" })}
+                        value={password}
+                        setValue={setPassword}
+                        onChange={() => setErrors(prev => ({ ...prev, password: "" }))}
                     />
 
                     <div className="pt-2">
@@ -121,16 +172,12 @@ export default function RegisterPage() {
                     <AnimatedButton variant="outline" label="Microsoft" sizeConfig="sm" />
                 </div>
 
-                {/* Footer Link */}
                 <div className="mt-8 flex flex-col items-center gap-4">
                     <AnimatedLink
                         prefixText="Already have an account?"
                         text="Sign in here"
                         align="center"
-                        onClick={() => {
-                            // redirect to login page logic here
-                            router.push("/auth/login");
-                        }}
+                        onClick={() => router.push("/auth/login")}
                     />
                 </div>
             </AnimatedCard>

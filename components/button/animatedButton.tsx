@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Loader2 } from "lucide-react";
+import { AnimatedSkeleton } from "@/components/utils/animatedSkeleton";
 
 type ButtonSize = "sm" | "md" | "lg";
 type ButtonVariant = "primary" | "secondary" | "outline";
@@ -11,6 +12,8 @@ interface AnimatedButtonProps extends React.ButtonHTMLAttributes<HTMLButtonEleme
 	sizeConfig?: ButtonSize;
 	variant?: ButtonVariant;
 	isLoading?: boolean;
+	/** When true renders a skeleton placeholder instead of the button */
+	isSkeleton?: boolean;
 	icon?: React.ReactNode;
 }
 
@@ -19,11 +22,13 @@ export const AnimatedButton = ({
 	sizeConfig = "md",
 	variant = "primary",
 	isLoading = false,
+	isSkeleton = false,
 	icon,
 	className = "",
-	disabled, // Extracting disabled from props
+	disabled,
 	...props
 }: AnimatedButtonProps) => {
+	if (isSkeleton) return <AnimatedSkeleton type="button" sizeConfig={sizeConfig} variant={variant} className={className} />;
 	const isInactive = disabled || isLoading;
 
 	const scales = {
@@ -43,32 +48,27 @@ export const AnimatedButton = ({
 			{...props}
 			disabled={isInactive}
 			className={`
-				group relative flex items-center justify-center overflow-hidden border font-bold tracking-wide 
-				transition-all duration-300 ease-out 
+				group relative flex items-center justify-center overflow-hidden border font-bold tracking-wide
+				transition-all duration-300 ease-out
 				${scales[sizeConfig]}
 				${variants[variant]}
-				
-				/* Interaction Logic */
-				${isInactive 
-					? "opacity-50 cursor-not-allowed grayscale-[0.3]" 
+				${isInactive
+					? "opacity-50 cursor-not-allowed grayscale-[0.3]"
 					: "active:scale-[0.96] hover:-translate-y-1 hover:shadow-xl"
 				}
-				
-				/* Outline specific hover is disabled if button is inactive */
 				${variant === "outline" && !isInactive ? "hover:border-primary/50" : ""}
-				
 				${className}
 			`}
 		>
-			{/* Shimmer Layer - only animate if NOT inactive */}
+			{/* Shimmer layer — primary-foreground at low opacity works on any bg */}
 			{variant !== "outline" && !isInactive && (
 				<div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-					<div className={`
-						absolute top-0 -inset-full h-full w-1/2 
-						bg-gradient-to-r from-transparent via-white/20 to-transparent 
+					<div className="
+						absolute top-0 -inset-full h-full w-1/2
+						bg-gradient-to-r from-transparent via-primary-foreground/20 to-transparent
 						skew-x-[-25deg] transition-all duration-[700ms] ease-in-out
 						left-[-100%] group-hover:left-[150%]
-					`} />
+					" />
 				</div>
 			)}
 
@@ -88,7 +88,7 @@ export const AnimatedButton = ({
 				)}
 			</div>
 
-			{/* Background Glow - only show if NOT inactive */}
+			{/* Background glow */}
 			{variant === "primary" && !isInactive && (
 				<div className="absolute inset-0 z-0 bg-primary opacity-0 blur-xl transition-opacity duration-300 group-hover:opacity-20" />
 			)}

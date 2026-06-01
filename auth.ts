@@ -3,6 +3,8 @@ import Credentials from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 
 import { db } from "@/lib/db"
+import { getUserFromDB } from "@/lib/auth/user"
+import { verifyPassword } from "@/lib/auth/password"
 
 
 export const {auth, signIn, signOut, handlers} = NextAuth({
@@ -30,23 +32,11 @@ export const {auth, signIn, signOut, handlers} = NextAuth({
 
             async authorize(credentials) {
                 console.log(credentials)
-
-                if (!credentials?.email || !credentials?.password) {
-                    return null
-                }
-
-                if (
-                    credentials.email === "test" &&
-                    credentials.password === "password"
-                ) {
-                    return {
-                        id: "1",
-                        name: "Test User",
-                        email: "test@test.com",
-                    }
-                }
-
-                return null
+                const user = await getUserFromDB(credentials?.email as string);
+                if (!user) return null;
+                const isValid = user && await verifyPassword(credentials?.password as string, user.password);
+                if (!isValid) return null;
+                return user
             },
         }),
     ],

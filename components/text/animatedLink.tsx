@@ -1,15 +1,17 @@
 "use client";
 
 import React from "react";
+import { AnimatedSkeleton } from "@/components/utils/animatedSkeleton";
 
 interface AnimatedLinkProps {
 	text: string;
 	onClick?: () => void;
 	className?: string;
-	prefixText?: string; 
+	prefixText?: string;
 	align?: "left" | "center" | "right";
 	weight?: "medium" | "semibold" | "bold";
 	disableAnimation?: boolean;
+	isLoading?: boolean;
 }
 
 export const AnimatedLink = ({
@@ -20,8 +22,10 @@ export const AnimatedLink = ({
 	align = "left",
 	weight = "semibold",
 	disableAnimation = false,
+	isLoading = false,
 }: AnimatedLinkProps) => {
-	
+	if (isLoading) return <AnimatedSkeleton type="link" className={className} />;
+
 	const alignmentMap = {
 		left: "justify-start text-left",
 		center: "justify-center text-center",
@@ -48,23 +52,19 @@ export const AnimatedLink = ({
 				className={`
 					group relative outline-none transition-colors duration-300
 					text-primary hover:text-primary/80
-					/* Forcefully kill all default decorations */
-					!no-underline !outline-none
 					${weightMap[weight]}
 				`}
-				// The most aggressive way to prevent browser underlines
-				style={{ 
-					textDecoration: 'none', 
-					textDecorationLine: 'none',
-					WebkitTextDecorationLine: 'none' 
+				style={{
+					textDecoration: "none",
+					textDecorationLine: "none",
+					WebkitTextDecorationLine: "none",
 				}}
 			>
 				{text}
-				
-				{/* Custom Animated Underline - Only renders if NOT disabled */}
+
 				{!disableAnimation && (
-					<span 
-						className="absolute -bottom-0.5 left-0 h-[1.5px] w-full scale-x-0 bg-primary transition-transform duration-300 ease-out origin-left group-hover:scale-x-100" 
+					<span
+						className="absolute -bottom-0.5 left-0 h-[1.5px] w-full scale-x-0 bg-primary transition-transform duration-300 ease-out origin-left group-hover:scale-x-100"
 						aria-hidden="true"
 					/>
 				)}

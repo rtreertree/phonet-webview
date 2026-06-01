@@ -1,12 +1,17 @@
 "use client";
 
 import { AnimatedButton } from "@/components/button/animatedButton";
+import { AnimatedToggle } from "@/components/button/animatedToggle";
 import { AnimatedTextField } from "@/components/text/animatedTextField";
 import { AnimatedSeparator } from "@/components/utils/animatedSeparator";
 import { Apple, LogIn, Sparkles } from "lucide-react";
+import { useState } from "react";
 
 
 export default function Home() {
+
+	const [checked, onCheckedChange] = useState(false);
+
 	return (
 		<>
 			<div className="space-y-6 p-10">
@@ -91,6 +96,35 @@ export default function Home() {
 				<AnimatedButton
 					isLoading={true}
 					label="Processing..."
+				/>
+
+				<AnimatedToggle 
+					checked={checked}
+					onCheckedChange={onCheckedChange}
+					label="Enable Notifications"
+					description="Receive updates and news"
+				/>
+
+				<AnimatedToggle 
+					checked={checked}
+					onCheckedChange={onCheckedChange}
+					label="Enable Notifications"
+					description="Receive updates and news"
+					disabled={true}
+				/>
+				<AnimatedToggle 
+					checked={checked}
+					onCheckedChange={onCheckedChange}
+					label="Enable Notifications"
+					description="Receive updates and news"
+					isLoading={true}
+				/>
+				<AnimatedToggle 
+					checked={checked}
+					onCheckedChange={onCheckedChange}
+					label="Enable Notifications"
+					description="Receive updates and news"
+					isSkeleton={true}	
 				/>
 			</div>
 		</>
