@@ -26,6 +26,7 @@ model User {
 
     // Optional fields for user profile
     enableNotifications Boolean @default(true) // email notifications
+    themePreference     String  @default("system")
     schoolCode          String? // for school-specific features
 
     accounts Account[]

@@ -8,8 +8,10 @@ import { AnimatedSelect } from "@/components/utils/animatedSelect";
 import { AnimatedButton } from "@/components/button/animatedButton";
 import { AnimatedLink } from "@/components/text/animatedLink";
 import { AnimatedSeparator } from "@/components/utils/animatedSeparator";
+import { AnimatedSkeleton } from "@/components/utils/animatedSkeleton";
 import { AnimatedDateSelector } from "@/components/utils/animatedDateSelector";
 import { AnimatedToggle } from "@/components/button/animatedToggle";
+import { getAccountSettings, updateAccountSettings } from "@/actions/auth/account";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -46,29 +48,51 @@ interface PageProps {
 }
 
 // ---------------------------------------------------------------------------
-// Mock API
+// Server-backed account helpers
 // ---------------------------------------------------------------------------
 
-const fetchAccountData = (): Promise<Omit<SettingsState,
+const fetchAccountData = async (): Promise<Omit<SettingsState,
     | "setUsername" | "setBirthDate" | "setEnglishLevel"
     | "setGender" | "setNotificationsEnabled" | "setTheme"
     | "setCurrentPassword" | "setNewPassword"
->> =>
-    new Promise((resolve) =>
-        setTimeout(() => resolve({
-            username: "JaneDoe",
-            birthDate: "1995-06-15",
-            englishLevel: "B2",
+>> => {
+    const data = await getAccountSettings();
+
+    if (!data) {
+        return {
+            username: "",
+            birthDate: "",
+            englishLevel: "",
             gender: "undisclosed",
             notificationsEnabled: true,
-            theme: "dark",
+            theme: "system",
             currentPassword: "",
             newPassword: "",
-        }), 1000)
-    );
+        };
+    }
 
-const saveAccountData = (_data: ReturnType<typeof buildPayload>): Promise<void> =>
-    new Promise((resolve) => setTimeout(resolve, 1000));
+    return {
+        username: data.fullName,
+        birthDate: data.birthDate,
+        englishLevel: data.englishLevel,
+        gender: data.gender,
+        notificationsEnabled: data.notificationsEnabled,
+        theme: data.themePreference,
+        currentPassword: "",
+        newPassword: "",
+    };
+};
+
+const saveAccountData = async (data: ReturnType<typeof buildPayload>) => {
+    await updateAccountSettings({
+        fullName: data.username,
+        birthDate: data.birthDate,
+        englishLevel: data.englishLevel,
+        gender: data.gender,
+        notificationsEnabled: data.notificationsEnabled,
+        themePreference: data.theme,
+    });
+};
 
 const buildPayload = (state: SettingsState) => ({
     username: state.username,
@@ -107,21 +131,18 @@ const ProfilePage = ({ state, isLoading, isSaving }: PageProps) => (
             disabled={isSaving}
             isLoading={isLoading}
         />
-        <AnimatedSelect
-            label="English Level (A1–C2)"
-            value={state.englishLevel}
-            onChange={state.setEnglishLevel}
-            disabled={isSaving}
-            isLoading={isLoading}
-            options={[
-                { label: "A1 — Beginner",          value: "A1" },
-                { label: "A2 — Elementary",         value: "A2" },
-                { label: "B1 — Intermediate",       value: "B1" },
-                { label: "B2 — Upper Intermediate", value: "B2" },
-                { label: "C1 — Advanced",           value: "C1" },
-                { label: "C2 — Mastery",            value: "C2" },
-            ]}
-        />
+        {isLoading ? (
+            <AnimatedSkeleton type="field" sizeConfig="md" className="w-full" />
+        ) : (
+            <div className="flex flex-col w-full">
+                <label className="font-bold uppercase tracking-[0.15em] text-[10px] text-muted-foreground/50">
+                    English Level (A1–C2)
+                </label>
+                <div className="mt-1 px-4 py-3 rounded-2xl border border-input bg-background/50 text-foreground font-medium">
+                    B2 — Upper Intermediate
+                </div>
+            </div>
+        )}
         <AnimatedSelect
             label="Gender"
             value={state.gender}
@@ -273,6 +294,8 @@ export const AccountModal = ({ isOpen, onClose }: AccountModalProps) => {
         try {
             await saveAccountData(buildPayload(state));
             onClose();
+        } catch (error) {
+            console.error("Failed to save account settings", error);
         } finally {
             setIsSaving(false);
         }
